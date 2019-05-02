@@ -1,64 +1,59 @@
 //
 //  main.cpp
-//  GraphicsFinalProject
-//
-//  Created by Zachary Dobbs on 4/29/19.
-//  Copyright © 2019 Zachary Dobbs. All rights reserved.
+//  GraphicsFinalProject - Pong game
+//  Zach Dobbs, Seth John, Brian Hillis
 //
 
 #include <iostream>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
+#include <GLUT/glut.h>
+
+#define GL_SILENCE_DEPRECATION
 
 const int width = 450, height = 450;
-const int RacketWidth = 10, RacketHeight = 100;
-const int BallWidth = 10, BallHeight = 10;
+const int bumperWidth = 10, bumperHeight = 100;
+const int ballWidth = 10, ballHeight = 10;
 
 double gameTime;
 
-int LeftY = 0;
-int RightY = 0;
-int Racketspeed = 5;
+int leftBumperYPos = 0;
+int rightBumperYPos = 0;
+int racketSpeed = 10;
 
 int ballX, ballY;
-int ballVelocityX = 1;
+int ballSpeed = 3;
+int ballVelocityX = ballSpeed;
 float ballVelocityY = 0.0f;
-float StoredVelocity = 0.0f;
+float storedVelocity = 0.0f;
+
+bool startGame = false;
 
 // ball velocity
-double TimeSpeed=0.2;
+double gameSpeed = 0;
 
-int LeftScore = 0;
-int RightScore = 0;
+int player1Score = 0;
+int player2Score = 0;
+// use malloc for any mutable strings
+char* scoreText = (char*)malloc(20*sizeof(char));
+char player1NameText[20] = "Player 1";
+char player2NameText[20] = "Player 2";
 
-void Reset();
-void Collisions();
-bool Between(int target, int min, int max);
+void setup();
+void moveBall();
+bool inbetween(int target, int min, int max);
 
-class gl_helper {
+class PongDisplay {
     public:
-        static void DrawRect(int x, int y, int width, int height);
-        static void DrawNumber(int x , int y, int n);
-        static void DebugPoint(float x , float y);
+        static void drawRect(int x, int y, int width, int height);
+        static void drawStrokedText(char* string, float scale, float x, float y, float z);
 };
 
-void gl_helper::DebugPoint(float x, float y) {
-    
-    float SavedColor[4];
-    glGetFloatv(GL_CURRENT_COLOR, SavedColor);
-    glColor4f(1.0f, 0, 0, 1.0f);
-    
-    glBegin(GL_POINTS);
-    glVertex2f(x, y);
-    glEnd();
-    
-    glColor4f(SavedColor[0],SavedColor[1],SavedColor[2],SavedColor[3]);
-}
-
-void gl_helper::DrawRect(int x, int y, int width, int height) {
+void PongDisplay::drawRect(int x, int y, int width, int height) {
     glBegin(GL_QUADS);
     glVertex2f(x, y);
     glVertex2f(x + width, y);
@@ -67,112 +62,49 @@ void gl_helper::DrawRect(int x, int y, int width, int height) {
     glEnd();
 }
 
-void gl_helper::DrawNumber(int x, int y, int n) {
-    switch(n) {
-        case 0:
-            DrawRect(x + 5, y, 20, 5);
-            DrawRect(x, y + 5, 5, 20);
-            DrawRect(x + 25, y + 5, 5, 20);
-            DrawRect(x, y + 30, 5, 20);
-            DrawRect(x + 25, y + 30, 5, 20);
-            DrawRect(x + 5, y + 50, 20, 5 );
-            break;
-            
-        case 1:
-            DrawRect(x + 25, y + 5, 5, 20);
-            DrawRect(x + 25, y + 30, 5, 20);
-            break;
-            
-        case 2:
-            DrawRect(x + 5, y , 20, 5);
-            DrawRect(x + 25, y + 5, 5, 20);
-            DrawRect(x + 5, y + 25, 20, 5);
-            DrawRect(x, y + 30, 5, 20);
-            DrawRect(x + 5, y + 50, 20, 5);
-            break;
-            
-        case 3:
-            DrawRect(x + 5, y, 20, 5);
-            DrawRect(x + 25, y + 5, 5, 20);
-            DrawRect(x + 5, y + 25, 20, 5);
-            DrawRect(x + 25, y + 30, 5, 20);
-            DrawRect(x + 5, y + 50, 20, 5);
-            break;
-            
-        case 4:
-            DrawRect(x, y + 5, 5, 20);
-            DrawRect(x + 25, y + 5, 5, 20);
-            DrawRect(x + 5, y + 25, 20, 5);
-            DrawRect(x + 25, y + 30, 5, 20);
-            break;
-            
-        case 5:
-            DrawRect(x + 5, y, 20, 5);
-            DrawRect(x, y + 5, 5, 20);
-            DrawRect(x + 5, y + 25, 20, 5);
-            DrawRect(x + 25, y + 30, 5, 20);
-            DrawRect(x + 5, y + 50, 20, 5);
-            break;
-            
-        case 6:
-            DrawRect(x + 5, y, 20, 5);
-            DrawRect(x, y + 5, 5, 20);
-            DrawRect(x + 5, y + 25, 20, 5);
-            DrawRect(x, y + 30, 5, 20);
-            DrawRect(x + 25, y + 30, 5, 20);
-            DrawRect(x + 5, y + 50, 20, 5);
-            break;
-            
-        case 7:
-            DrawRect(x + 5, y, 20, 5);
-            DrawRect(x, y + 5, 5, 20);
-            DrawRect(x + 25, y + 5, 5, 20);
-            DrawRect(x + 25, y + 30, 5, 20);
-            break;
-            
-        case 8:
-            DrawRect(x + 5, y, 20, 5);
-            DrawRect(x, y + 5, 5, 20);
-            DrawRect(x + 25, y + 5, 5, 20);
-            DrawRect(x + 5, y + 25, 20, 5);
-            DrawRect(x, y + 30, 5, 20);
-            DrawRect(x + 25, y + 30, 5, 20);
-            DrawRect(x + 5, y + 50, 20, 5);
-            break;
-            
-        case 9:
-            DrawRect(x + 5, y, 20, 5);
-            DrawRect(x, y + 5, 5, 20);
-            DrawRect(x + 25, y + 5, 5, 20);
-            DrawRect(x + 5, y + 25, 20, 5);
-            DrawRect(x + 25, y + 30, 5, 20);
-            DrawRect(x + 5, y + 50, 20, 5);
-            break;
+void PongDisplay::drawStrokedText(char* string, float scale, float x, float y, float z) {
+    char* c;
+    
+    glPushMatrix();
+    glTranslatef(x, y+8,z);
+    glScalef(scale, -scale, z);
+    
+    c = string;
+    while (*c != '\0') {
+        glutStrokeCharacter(GLUT_STROKE_ROMAN, *c);
+        c++;
     }
+    glPopMatrix();
 }
 
+// key callback
 void mykey(GLFWwindow* window, int key, int scancode, int action, int mods){
-//    if (action == GLFW_KEY_PRESS) {
-//        switch(key) {
-//            default:
-//                break;
-//        }
-//    }
-    //Left Control UP
-    if(key == GLFW_KEY_UP) {
-        RightY-=Racketspeed;
-    }
-    //Left Control Down
-    if(key == GLFW_KEY_DOWN) {
-        RightY+=Racketspeed;
-    }
-    //Right Control UP
-    if(key == GLFW_KEY_W) {
-        LeftY-=Racketspeed;
-    }
-    //Right Control Down
-    if(key == GLFW_KEY_S) {
-        LeftY += Racketspeed;
+    // TODO press escape to leave the current game and go to the menu
+    // Display the last score at menu screen
+    // Pressing escape at the menu will close the application
+    // Add in keys to change colors of both bumpers and ball within menu
+    // Change game modes and difficulties (i.e. ball speed and bumper speed, number of balls)
+    // Prevent users from moving the bumpers off the screen
+    if (action == GLFW_PRESS) {
+        switch(key) {
+            case GLFW_KEY_SPACE:
+                startGame = true;
+                break;
+            case GLFW_KEY_O:
+                rightBumperYPos -= racketSpeed;
+                break;
+            case GLFW_KEY_L:
+                rightBumperYPos += racketSpeed;
+                break;
+            case GLFW_KEY_W:
+                leftBumperYPos -= racketSpeed;
+                break;
+            case GLFW_KEY_S:
+                leftBumperYPos += racketSpeed;
+                break;
+            default:
+                break;
+        }
     }
 }
 
@@ -188,16 +120,15 @@ int main() {
     
     glfwSetKeyCallback(window, mykey);
     
-    //Ball Starting position
-    ballX = width/2 - 5 ;
-    ballY = height/2 - 5;
+    // define the text needed in the game
+    // TODO add ability for users to pick a name, show on game screen
+    char titleText[20] = "Welcome to Pong!";
+    char leftBumperCText[40] = "W and S control the left bumper";
+    char rightBumperCText[40] = "O and L control the right bumper";
+    char startGameText[30] = "Press spacebar to begin";
     
-    //Racket Starting Y Position
-    LeftY = height/2 - 50;
-    RightY = height/2 - 50;
-    
-    gameTime = glfwGetTime() * TimeSpeed;
-    
+    gameTime = glfwGetTime() * gameSpeed;
+    setup();
     
     while(!glfwWindowShouldClose(window)){
         
@@ -211,23 +142,28 @@ int main() {
         glClearColor(0.0f, 0.0f, 0.0f, 0);
         glClear(GL_COLOR_BUFFER_BIT);
         
-        //Collision Detection
-        Collisions();
-        
-        //Left Racket
-        gl_helper::DrawRect( 0 , LeftY, RacketWidth , RacketHeight  );
-        //Right Racket
-        gl_helper::DrawRect( width - 10 , RightY , RacketWidth , RacketHeight  );
-        //Ball
-        gl_helper::DrawRect( ballX , ballY , BallWidth , BallHeight  );
-        
-        //Left Score
-        gl_helper::DrawNumber( width/2 - 40 , 10 , LeftScore );
-        //Right Score
-        gl_helper::DrawNumber( width/2 + 10 , 10 , RightScore );
-        //Colon
-        gl_helper::DrawRect( width/2 - 2 , 25 , 5 , 5 );
-        gl_helper::DrawRect( width/2 - 2 , 45 , 5 , 5 );
+        if (startGame) {
+            // move the ball and check for any moveBall
+            moveBall();
+            // draw ball
+            PongDisplay::drawRect(ballX, ballY, ballWidth, ballHeight);
+            // draw left bumper
+            PongDisplay::drawRect(0, leftBumperYPos, bumperWidth, bumperHeight);
+            // draw right bumper
+            PongDisplay::drawRect(width - 10, rightBumperYPos, bumperWidth, bumperHeight);
+            // draw the current score
+            PongDisplay::drawStrokedText(player1NameText, 0.1f, 120, 20, 0);
+            PongDisplay::drawStrokedText(player2NameText, 0.1f, 275, 20, 0);
+            PongDisplay::drawStrokedText(scoreText, 0.4f, 135, 80, 0);
+        }
+        else {
+            // display the menu
+            PongDisplay::drawStrokedText(titleText, 0.2f, 110, 100, 0);
+            PongDisplay::drawStrokedText(leftBumperCText, 0.1f, 120, 140, 0);
+            PongDisplay::drawStrokedText(rightBumperCText, 0.1f, 120, 170, 0);
+            PongDisplay::drawStrokedText(startGameText, 0.15f, 110, 220, 0);
+        }
+    
         
         glfwSwapBuffers(window);
         glfwSwapInterval(1);
@@ -240,126 +176,101 @@ int main() {
     return 0;
 }
 
-void Collisions(){
-    
-    if( glfwGetTime() - gameTime > 1.0 ){
-        
-        gameTime = glfwGetTime()*TimeSpeed;
-        
+void moveBall(){
+    if (glfwGetTime() - gameTime > 1.0) {
+        gameTime = glfwGetTime() * gameSpeed;
         ballX += ballVelocityX;
+        storedVelocity += ballVelocityY;
         
-        StoredVelocity += ballVelocityY;
-        
-        if(StoredVelocity > 1.0f){
-            ballY+=1;
-            StoredVelocity-=1;
-        }else if(StoredVelocity < -1.0f){
-            ballY-=1;
-            StoredVelocity+=1;
-            
+        if (storedVelocity > 1.0f) {
+            ballY += 1;
+            storedVelocity -= 1;
+        }
+        else if(storedVelocity < -1.0f) {
+            ballY -= 1;
+            storedVelocity += 1;
         }
     }
     
-    
-    //Ball at Right Edge
-    if( ballX > width - RacketWidth*2 ){
-        
-        if( Between(ballY, RightY + RacketHeight, RightY )  ){
+    // do collision checking here to see if the ball needs to bounce or score
+    // right edge detection
+    if (ballX > width - bumperWidth*2) {
+        if (inbetween(ballY, rightBumperYPos + bumperHeight, rightBumperYPos)) {
+            
+            ballVelocityX = -ballVelocityX;
+            
+            if (inbetween(ballY, rightBumperYPos, rightBumperYPos + bumperHeight*0.3))
+                ballVelocityY -= 0.3;
+            else if (inbetween(ballY, rightBumperYPos + bumperHeight - bumperHeight*0.3, rightBumperYPos + bumperHeight))
+                ballVelocityY += 0.3;
+        }
+        else {
+            player1Score++;
+            setup();
+        }
+    }
+    // left edge detection
+    else if (ballX < bumperWidth) {
+        if(inbetween(ballY, leftBumperYPos + bumperHeight, leftBumperYPos)) {
             
             ballVelocityX= -ballVelocityX;
             
-            if( Between(ballY, RightY, RightY + RacketHeight*0.3 ) ){
-                
-                ballVelocityY-=0.3;
-                
-            }else if( Between(ballY,  RightY + RacketHeight - RacketHeight*0.3 , RightY + RacketHeight ) ){
-                
-                ballVelocityY+=0.3;
-                
-            }
-            
-            
-        }else{
-            
-            LeftScore++;
-            Reset();
-            
+            if(inbetween(ballY, leftBumperYPos, leftBumperYPos + bumperHeight*0.3))
+                ballVelocityY -= 0.3;
+            else if(inbetween(ballY,  leftBumperYPos + bumperHeight - bumperHeight*0.3, rightBumperYPos + bumperHeight))
+                ballVelocityY += 0.3;
         }
-        
-        //Ball at Left Edge
-    }else if( ballX < RacketWidth ){
-        
-        if( Between(ballY, LeftY + RacketHeight, LeftY )  ){
-            
-            ballVelocityX= -ballVelocityX;
-            
-            if( Between(ballY, LeftY, LeftY + RacketHeight*0.3 ) ){
-                
-                ballVelocityY-=0.3;
-                
-            }else if( Between(ballY,  LeftY + RacketHeight - RacketHeight*0.3 , RightY + RacketHeight ) ){
-                
-                ballVelocityY+=0.3;
-            }
-            
-        }else{
-            
-            RightScore++;
-            Reset();
-            
+        else {
+            player2Score++;
+            setup();
         }
-        
-        //Ball at Top Edge
-    }else if( ballY < 0 ){
-        
+    }
+    // top edge detection
+    else if(ballY < 0) {
         ballY = 0;
         ballVelocityY= -ballVelocityY;
-        
-        //Ball at Buttom Edge
-    }else if( ballY > height - BallHeight ){
-        
-        ballY = height - BallHeight;
-        ballVelocityY= -ballVelocityY;
-        
     }
-    
+    // bottom edge detection
+    else if(ballY > height - ballHeight){
+        ballY = height - ballHeight;
+        ballVelocityY = -ballVelocityY;
+    }
 }
 
 
-bool Between(int target, int a , int b ){
-    
+bool inbetween(int target, int a , int b ){
     int max;
     int min;
     
-    if( a > b){
-        
+    if(a > b) {
         max = a;
         min = b;
-        
-    }else{
-        max=b;
-        min=a;
+    }
+    else {
+        max = b;
+        min = a;
     }
     
-    if( target < max && target > min)
+    if(target < max && target > min)
         return true;
     
     return false;
-    
 }
 
-void Reset(){
-    
-    ballX = width/2 - BallWidth/2 ;
+void setup(){
+    // setup ball position
+    ballX = width/2 - 5 ;
+    ballY = height/2 - 5;
     glfwSetTime(0.0);
     gameTime=0.0;
-    ballVelocityX=1;
-    ballVelocityY=0;
-    StoredVelocity=0;
+    ballVelocityX = ballSpeed;
+    ballVelocityY = 0;
+    storedVelocity=0;
     
-    if(LeftScore > 9 || RightScore > 9){
-        
-        LeftScore = 0;
-        RightScore = 0;
-    }
+    // setup bumpet positions
+    leftBumperYPos = height/2 - 50;
+    rightBumperYPos = height/2 - 50;
+    
+    // update the score display
+    snprintf(scoreText, 20, "%d - %d\n", player1Score, player2Score);
 }
