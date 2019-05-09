@@ -23,10 +23,10 @@ double gameTime;
 
 int leftBumperYPos = 0;
 int rightBumperYPos = 0;
-int racketSpeed = 10;
+int bumperSpeed = 10;
 
 int ballX, ballY;
-int ballSpeed = 3;
+int ballSpeed = 2;
 int ballVelocityX = ballSpeed;
 float ballVelocityY = 0.0f;
 float storedVelocity = 0.0f;
@@ -84,23 +84,29 @@ void mykey(GLFWwindow* window, int key, int scancode, int action, int mods){
     // Pressing escape at the menu will close the application
     // Add in keys to change colors of both bumpers and ball within menu
     // Change game modes and difficulties (i.e. ball speed and bumper speed, number of balls)
-    // Prevent users from moving the bumpers off the screen
     if (action == GLFW_PRESS) {
         switch(key) {
             case GLFW_KEY_SPACE:
-                startGame = true;
+                if (!startGame) {
+                    startGame = true;
+                    setup();
+                }
                 break;
             case GLFW_KEY_O:
-                rightBumperYPos -= racketSpeed;
+                if (rightBumperYPos > 0)
+                    rightBumperYPos -= bumperSpeed;
                 break;
             case GLFW_KEY_L:
-                rightBumperYPos += racketSpeed;
+                if (rightBumperYPos + bumperHeight < height)
+                    rightBumperYPos += bumperSpeed;
                 break;
             case GLFW_KEY_W:
-                leftBumperYPos -= racketSpeed;
+                if (leftBumperYPos > 0)
+                    leftBumperYPos -= bumperSpeed;
                 break;
             case GLFW_KEY_S:
-                leftBumperYPos += racketSpeed;
+                if (leftBumperYPos + bumperHeight < height)
+                    leftBumperYPos += bumperSpeed;
                 break;
             default:
                 break;
@@ -268,8 +274,8 @@ void setup(){
     storedVelocity=0;
     
     // setup bumpet positions
-    leftBumperYPos = height/2 - 50;
-    rightBumperYPos = height/2 - 50;
+    leftBumperYPos = height/2 - bumperHeight/2;
+    rightBumperYPos = height/2 - bumperHeight/2;
     
     // update the score display
     snprintf(scoreText, 20, "%d - %d\n", player1Score, player2Score);
