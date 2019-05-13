@@ -92,6 +92,11 @@ void mykey(GLFWwindow* window, int key, int scancode, int action, int mods){
                     setup();
                 }
                 break;
+            case GLFW_KEY_ESCAPE:
+                if (startGame) {
+                    startGame = false;
+                }
+                break;
             case GLFW_KEY_O:
                 if (rightBumperYPos > 0)
                     rightBumperYPos -= bumperSpeed;
@@ -168,6 +173,7 @@ int main() {
             PongDisplay::drawStrokedText(leftBumperCText, 0.1f, 120, 140, 0);
             PongDisplay::drawStrokedText(rightBumperCText, 0.1f, 120, 170, 0);
             PongDisplay::drawStrokedText(startGameText, 0.15f, 110, 220, 0);
+            // TODO display previous score
         }
     
         
