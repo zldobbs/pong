@@ -40,14 +40,18 @@ bool multipleBalls = false;
 double gameTime2;
 
 bool startGame = false;
+int nameInput = 0;
+int name1Length = 0;
+int name2Length = 0;
 
 double gameSpeed = 0;
 
 int player1Score = 0;
 int player2Score = 0;
 char* scoreText = (char*)malloc(20*sizeof(char));
-char player1NameText[20] = "Player 1";
-char player2NameText[20] = "Player 2";
+char player1NameText[20] = "";
+char player2NameText[20] = "";
+char charInput[1];
 char gameModeText[50];
 char ballSpeedText[50];
 
@@ -74,7 +78,6 @@ void PongDisplay::drawRect(int x, int y, int width, int height) {
 
 void PongDisplay::drawStrokedText(char* string, float scale, float x, float y, float z) {
 	char* c;
-	
 	glPushMatrix();
 	glTranslatef(x, y+8,z);
 	glScalef(scale, -scale, z);
@@ -95,57 +98,116 @@ void mykey(GLFWwindow* window, int key, int scancode, int action, int mods){
     // Add in keys to change colors of both bumpers and ball within menu
     // Change game modes and difficulties (i.e. ball speed and bumper speed, number of balls)
     if (action == GLFW_PRESS) {
-        switch(key) {
-            case GLFW_KEY_SPACE:
-                if (!startGame) {
-                    startGame = true;
-                    setup();
-                }
-                break;
-            case GLFW_KEY_ESCAPE:
-                if (startGame) {
-                    startGame = false;
-                }
-                break;
-            case GLFW_KEY_O:
-                if (rightBumperYPos > 0)
-                    rightBumperYPos -= bumperSpeed;
-                break;
-            case GLFW_KEY_L:
-                if (rightBumperYPos + bumperHeight < height)
-                    rightBumperYPos += bumperSpeed;
-                break;
-            case GLFW_KEY_W:
-                if (leftBumperYPos > 0)
-                    leftBumperYPos -= bumperSpeed;
-                break;
-            case GLFW_KEY_S:
-                if (leftBumperYPos + bumperHeight < height)
-                    leftBumperYPos += bumperSpeed;
-                break;
-            case GLFW_KEY_B:
-                if (!startGame) {
-                    ballSpeed++;
-                    if (ballSpeed > 4) {
-                        ballSpeed = 1;
+        if (!startGame) {
+            switch(nameInput) {
+                case 1:
+                    if (key >= 'A' && key <= 'Z' && name1Length <= 12) {
+                        sprintf(charInput, "%c", key);
+                        strcat(player1NameText, charInput);
+                        name1Length++;
                     }
-                    sprintf(ballSpeedText, "Ball Speed: %d", ballSpeed);
-                }
-                break;
-            case GLFW_KEY_G:
-                if (!startGame) {
-                    if (multipleBalls) {
-                        multipleBalls = false;
-                        strcpy(gameModeText, "Game Mode: Regular");
+                    if (key == GLFW_KEY_SPACE && name1Length <= 12) {
+                        strcat(player1NameText, " ");
+                        name1Length++;
+                    }
+                    if (key == GLFW_KEY_BACKSPACE && name1Length > 0) {
+                        player1NameText[strlen(player1NameText) - 1] = '\0';
+                        name1Length--;
+                    }
+                    break;
+                case 2:
+                    if (key >= 'A' && key <= 'Z' && name2Length <= 12) {
+                        sprintf(charInput, "%c", key);
+                        strcat(player2NameText, charInput);
+                        name2Length++;
+                    }
+                    if (key == GLFW_KEY_SPACE && name2Length <= 12) {
+                        strcat(player2NameText, " ");
+                        name2Length++;
+                    }
+                    if (key == GLFW_KEY_BACKSPACE && name2Length > 0) {
+                        player2NameText[strlen(player2NameText) - 1] = '\0';
+                        name2Length--;
+                    }
+                    break;
+            }
+            switch(key) {
+                case GLFW_KEY_ENTER:
+                    if (nameInput < 2) {
+                        nameInput++;
                     }
                     else {
-                        multipleBalls = true;
-                        strcpy(gameModeText, "Game Mode: Two Ball Mayhem");
+                        startGame = true;
+                        setup();
                     }
-                }
-                break;
-            default:
-                break;
+                    break;
+                case GLFW_KEY_B:
+                    if (nameInput == 0) {
+                        ballSpeed++;
+                        if (ballSpeed > 4) {
+                            ballSpeed = 1;
+                        }
+                        sprintf(ballSpeedText, "Ball Speed: %d", ballSpeed);
+                    }
+                    break;
+                case GLFW_KEY_G:
+                    if (nameInput == 0) {
+                        if (multipleBalls) {
+                            multipleBalls = false;
+                            strcpy(gameModeText, "Game Mode: Regular");
+                        }
+                        else {
+                            multipleBalls = true;
+                            strcpy(gameModeText, "Game Mode: Two Ball Mayhem");
+                        }
+                    }
+                    break;
+                case GLFW_KEY_ESCAPE:
+                    if (nameInput == 0) {
+                        glfwSetWindowShouldClose(window, GLFW_TRUE);
+                    }
+                    else {
+                        startGame = false;
+                        nameInput = 0;
+                        strcpy(player1NameText, "");
+                        strcpy(player2NameText, "");
+                        name1Length = 0;
+                        name2Length = 0;
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
+        else {
+            switch(key) {
+                case GLFW_KEY_ESCAPE:
+                    startGame = false;
+                    nameInput = 0;
+                    strcpy(player1NameText, "");
+                    strcpy(player2NameText, "");
+                    name1Length = 0;
+                    name2Length = 0;
+                    break;
+                case GLFW_KEY_O:
+                    if (rightBumperYPos > 0)
+                        rightBumperYPos -= bumperSpeed;
+                    break;
+                case GLFW_KEY_L:
+                    if (rightBumperYPos + bumperHeight < height)
+                        rightBumperYPos += bumperSpeed;
+                    break;
+                case GLFW_KEY_W:
+                    if (leftBumperYPos > 0)
+                        leftBumperYPos -= bumperSpeed;
+                    break;
+                case GLFW_KEY_S:
+                    if (leftBumperYPos + bumperHeight < height)
+                        leftBumperYPos += bumperSpeed;
+                    break;
+                default:
+                    break;
+            }
         }
     }
 }
@@ -171,7 +233,10 @@ int main() {
     char gameModeCText[40] = "Press G to change game mode";
     strcpy(ballSpeedText, "Ball Speed: 2");
     char ballSpeedCText[40] = "Pess B to change ball speed";
-    char startGameText[30] = "Press spacebar to begin";
+    char startGameText[30] = "Press enter to begin";
+    
+    char player1NameCText[20] = "Player 1 Name: ";
+    char player2NameCText[20] = "Player 2 Name: ";
     
     gameTime = glfwGetTime() * gameSpeed;
     setup();
@@ -202,21 +267,30 @@ int main() {
             // draw right bumper
             PongDisplay::drawRect(width - 10, rightBumperYPos, bumperWidth, bumperHeight);
             // draw the current score
-            PongDisplay::drawStrokedText(player1NameText, 0.1f, 120, 20, 0);
-            PongDisplay::drawStrokedText(player2NameText, 0.1f, 275, 20, 0);
+            PongDisplay::drawStrokedText(player1NameText, 0.1f, 145 - (name1Length * 3), 20, 0);
+            PongDisplay::drawStrokedText(player2NameText, 0.1f, 300 - (name2Length * 3), 20, 0);
             PongDisplay::drawStrokedText(scoreText, 0.4f, 135, 80, 0);
         }
         else {
-            // display the menu
-            PongDisplay::drawStrokedText(titleText, 0.3f, 50, 70, 0);
-            PongDisplay::drawStrokedText(leftBumperCText, 0.1f, 120, 120, 0);
-            PongDisplay::drawStrokedText(rightBumperCText, 0.1f, 120, 150, 0);
-            PongDisplay::drawStrokedText(gameModeText, 0.1f, 120, 180, 0);
-            PongDisplay::drawStrokedText(gameModeCText, 0.09f, 120, 200, 0);
-            PongDisplay::drawStrokedText(ballSpeedText, 0.1f, 120, 230, 0);
-            PongDisplay::drawStrokedText(ballSpeedCText, 0.09f, 120, 250, 0);
-            PongDisplay::drawStrokedText(startGameText, 0.15f, 110, 400, 0);
-            // TODO display previous score
+            if (nameInput > 0) {
+                PongDisplay::drawStrokedText(player1NameCText, 0.1f, 100, 100, 0);
+                PongDisplay::drawStrokedText(player1NameText, 0.1f, 250, 100, 0);
+                if (nameInput > 1) {
+                    PongDisplay::drawStrokedText(player2NameCText, 0.1f, 100, 150, 0);
+                    PongDisplay::drawStrokedText(player2NameText, 0.1f, 250, 150, 0);
+                }
+            }
+            else {
+                // display the menu
+                PongDisplay::drawStrokedText(titleText, 0.3f, 50, 70, 0);
+                PongDisplay::drawStrokedText(leftBumperCText, 0.1f, 120, 120, 0);
+                PongDisplay::drawStrokedText(rightBumperCText, 0.1f, 120, 150, 0);
+                PongDisplay::drawStrokedText(gameModeText, 0.1f, 120, 180, 0);
+                PongDisplay::drawStrokedText(gameModeCText, 0.09f, 120, 200, 0);
+                PongDisplay::drawStrokedText(ballSpeedText, 0.1f, 120, 230, 0);
+                PongDisplay::drawStrokedText(ballSpeedCText, 0.09f, 120, 250, 0);
+                PongDisplay::drawStrokedText(startGameText, 0.15f, 110, 400, 0);
+            }
         }
     
         glfwSwapBuffers(window);
@@ -313,13 +387,14 @@ bool inbetween(int target, int a , int b ){
 
 void setup(){
 	// setup ball position
-	ballX = width/2 - 5 ;
+	ballX = width/2 - 5;
 	ballY = height/2 - 5;
 	glfwSetTime(0.0);
-	gameTime=0.0;
+	gameTime = 0.0;
 	ballVelocityX = ballSpeed;
 	ballVelocityY = 0;
-	storedVelocity=0;
+	storedVelocity = 0;
+    nameInput = 0;
 	
 	if (multipleBalls == true) {
 		addBall();
