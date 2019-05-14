@@ -41,15 +41,15 @@ double gameTime2;
 
 bool startGame = false;
 
-// ball velocity
 double gameSpeed = 0;
 
 int player1Score = 0;
 int player2Score = 0;
-// use malloc for any mutable strings
 char* scoreText = (char*)malloc(20*sizeof(char));
 char player1NameText[20] = "Player 1";
 char player2NameText[20] = "Player 2";
+char gameModeText[50];
+char ballSpeedText[50];
 
 void setup();
 void moveBall();
@@ -123,9 +123,27 @@ void mykey(GLFWwindow* window, int key, int scancode, int action, int mods){
                 if (leftBumperYPos + bumperHeight < height)
                     leftBumperYPos += bumperSpeed;
                 break;
-            case GLFW_KEY_EQUAL:
-                addBall();
-                multipleBalls = true;
+            case GLFW_KEY_B:
+                if (!startGame) {
+                    ballSpeed++;
+                    if (ballSpeed > 4) {
+                        ballSpeed = 1;
+                    }
+                    sprintf(ballSpeedText, "Ball Speed: %d", ballSpeed);
+                }
+                break;
+            case GLFW_KEY_G:
+                if (!startGame) {
+                    if (multipleBalls) {
+                        multipleBalls = false;
+                        strcpy(gameModeText, "Game Mode: Regular");
+                    }
+                    else {
+                        multipleBalls = true;
+                        strcpy(gameModeText, "Game Mode: Two Ball Mayhem");
+                    }
+                }
+                break;
             default:
                 break;
         }
@@ -149,6 +167,10 @@ int main() {
     char titleText[20] = "Welcome to Pong!";
     char leftBumperCText[40] = "W and S control the left bumper";
     char rightBumperCText[40] = "O and L control the right bumper";
+    strcpy(gameModeText, "Game Mode: Regular");
+    char gameModeCText[40] = "Press G to change game mode";
+    strcpy(ballSpeedText, "Ball Speed: 2");
+    char ballSpeedCText[40] = "Pess B to change ball speed";
     char startGameText[30] = "Press spacebar to begin";
     
     gameTime = glfwGetTime() * gameSpeed;
@@ -186,14 +208,17 @@ int main() {
         }
         else {
             // display the menu
-            PongDisplay::drawStrokedText(titleText, 0.2f, 110, 100, 0);
-            PongDisplay::drawStrokedText(leftBumperCText, 0.1f, 120, 140, 0);
-            PongDisplay::drawStrokedText(rightBumperCText, 0.1f, 120, 170, 0);
-            PongDisplay::drawStrokedText(startGameText, 0.15f, 110, 220, 0);
+            PongDisplay::drawStrokedText(titleText, 0.3f, 50, 70, 0);
+            PongDisplay::drawStrokedText(leftBumperCText, 0.1f, 120, 120, 0);
+            PongDisplay::drawStrokedText(rightBumperCText, 0.1f, 120, 150, 0);
+            PongDisplay::drawStrokedText(gameModeText, 0.1f, 120, 180, 0);
+            PongDisplay::drawStrokedText(gameModeCText, 0.09f, 120, 200, 0);
+            PongDisplay::drawStrokedText(ballSpeedText, 0.1f, 120, 230, 0);
+            PongDisplay::drawStrokedText(ballSpeedCText, 0.09f, 120, 250, 0);
+            PongDisplay::drawStrokedText(startGameText, 0.15f, 110, 400, 0);
             // TODO display previous score
         }
     
-        
         glfwSwapBuffers(window);
         glfwSwapInterval(1);
         glfwPollEvents();
@@ -296,7 +321,7 @@ void setup(){
 	ballVelocityY = 0;
 	storedVelocity=0;
 	
-	if(multipleBalls == true){
+	if (multipleBalls == true) {
 		addBall();
 	}
 	
@@ -309,13 +334,12 @@ void setup(){
 }
 
 void addBall(){
-	ball2X = width/2 - 5 ;
+	ball2X = width/2 - 5;
 	ball2Y = height/2 - 5;
-	ball2VelocityX = ballSpeed;
+	ball2VelocityX = -ballSpeed;
 	ball2VelocityY = 0;
-	storedVelocity2=0;
-	gameTime2=glfwGetTime();
-	
+	storedVelocity2 = 0;
+	gameTime2 = glfwGetTime();
 }
 
 void moveBall2(){
