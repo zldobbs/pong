@@ -43,6 +43,8 @@ bool startGame = false;
 int nameInput = 0;
 int name1Length = 0;
 int name2Length = 0;
+float player1Color[3] = { 1.0f, 1.0f, 1.0f };
+float player2Color[3] = { 1.0f, 1.0f, 1.0f };
 
 double gameSpeed = 0;
 
@@ -63,11 +65,12 @@ bool inbetween(int target, int min, int max);
 
 class PongDisplay {
 public:
-	static void drawRect(int x, int y, int width, int height);
+	static void drawRect(int x, int y, int width, int height, float r, float g, float b);
 	static void drawStrokedText(char* string, float scale, float x, float y, float z);
 };
 
-void PongDisplay::drawRect(int x, int y, int width, int height) {
+void PongDisplay::drawRect(int x, int y, int width, int height, float r, float g, float b) {
+    glColor3f(r, g, b);
 	glBegin(GL_QUADS);
 	glVertex2f(x, y);
 	glVertex2f(x + width, y);
@@ -81,7 +84,7 @@ void PongDisplay::drawStrokedText(char* string, float scale, float x, float y, f
 	glPushMatrix();
 	glTranslatef(x, y+8,z);
 	glScalef(scale, -scale, z);
-	
+    glColor3f(1.0f, 1.0f, 1.0f);
 	c = string;
 	while (*c != '\0') {
 		glutStrokeCharacter(GLUT_STROKE_ROMAN, *c);
@@ -92,11 +95,6 @@ void PongDisplay::drawStrokedText(char* string, float scale, float x, float y, f
 
 // key callback
 void mykey(GLFWwindow* window, int key, int scancode, int action, int mods){
-    // TODO press escape to leave the current game and go to the menu
-    // Display the last score at menu screen
-    // Pressing escape at the menu will close the application
-    // Add in keys to change colors of both bumpers and ball within menu
-    // Change game modes and difficulties (i.e. ball speed and bumper speed, number of balls)
     if (action == GLFW_PRESS) {
         if (!startGame) {
             switch(nameInput) {
@@ -116,6 +114,16 @@ void mykey(GLFWwindow* window, int key, int scancode, int action, int mods){
                     }
                     break;
                 case 2:
+                    if (key == GLFW_KEY_C) {
+                        float r1 = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+                        float r2 = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+                        float r3 = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+                        player1Color[0] = r1;
+                        player1Color[1] = r2;
+                        player1Color[2] = r3;
+                    }
+                    break;
+                case 3:
                     if (key >= 'A' && key <= 'Z' && name2Length <= 12) {
                         sprintf(charInput, "%c", key);
                         strcat(player2NameText, charInput);
@@ -130,10 +138,20 @@ void mykey(GLFWwindow* window, int key, int scancode, int action, int mods){
                         name2Length--;
                     }
                     break;
+                case 4:
+                    if (key == GLFW_KEY_C) {
+                        float r1 = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+                        float r2 = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+                        float r3 = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+                        player2Color[0] = r1;
+                        player2Color[1] = r2;
+                        player2Color[2] = r3;
+                    }
+                    break;
             }
             switch(key) {
                 case GLFW_KEY_ENTER:
-                    if (nameInput < 2) {
+                    if (nameInput < 4) {
                         nameInput++;
                     }
                     else {
@@ -173,6 +191,12 @@ void mykey(GLFWwindow* window, int key, int scancode, int action, int mods){
                         strcpy(player2NameText, "");
                         name1Length = 0;
                         name2Length = 0;
+                        player1Color[0] = 1.0f;
+                        player1Color[1] = 1.0f;
+                        player1Color[2] = 1.0f;
+                        player2Color[0] = 1.0f;
+                        player2Color[1] = 1.0f;
+                        player2Color[2] = 1.0f;
                     }
                     break;
                 default:
@@ -237,6 +261,7 @@ int main() {
     
     char player1NameCText[20] = "Player 1 Name: ";
     char player2NameCText[20] = "Player 2 Name: ";
+    char playerColorCText[40] = "Paddle color (Press C to change): ";
     
     gameTime = glfwGetTime() * gameSpeed;
     setup();
@@ -257,39 +282,46 @@ int main() {
             // move the ball and check for any moveBall
             moveBall();
             if(multipleBalls == true){
-                PongDisplay::drawRect(ball2X, ball2Y, ballWidth, ballHeight);
+                PongDisplay::drawRect(ball2X, ball2Y, ballWidth, ballHeight, 1.0f, 1.0f, 1.0f);
                 moveBall2();
             }
             // draw ball
-            PongDisplay::drawRect(ballX, ballY, ballWidth, ballHeight);
+            PongDisplay::drawRect(ballX, ballY, ballWidth, ballHeight, 1.0f, 1.0f, 1.0f);
             // draw left bumper
-            PongDisplay::drawRect(0, leftBumperYPos, bumperWidth, bumperHeight);
+            PongDisplay::drawRect(0, leftBumperYPos, bumperWidth, bumperHeight, player1Color[0], player1Color[1], player1Color[2]);
             // draw right bumper
-            PongDisplay::drawRect(width - 10, rightBumperYPos, bumperWidth, bumperHeight);
+            PongDisplay::drawRect(width - 10, rightBumperYPos, bumperWidth, bumperHeight, player2Color[0], player2Color[1], player2Color[2]);
             // draw the current score
             PongDisplay::drawStrokedText(player1NameText, 0.1f, 145 - (name1Length * 3), 20, 0);
             PongDisplay::drawStrokedText(player2NameText, 0.1f, 300 - (name2Length * 3), 20, 0);
             PongDisplay::drawStrokedText(scoreText, 0.4f, 135, 80, 0);
         }
         else {
-            if (nameInput > 0) {
-                PongDisplay::drawStrokedText(player1NameCText, 0.1f, 100, 100, 0);
-                PongDisplay::drawStrokedText(player1NameText, 0.1f, 250, 100, 0);
-                if (nameInput > 1) {
+            switch (nameInput) {
+                case 4:
+                    PongDisplay::drawStrokedText(playerColorCText, 0.1f, 100, 170, 0);
+                    PongDisplay::drawRect(350, 170, 25, 10, player2Color[0], player2Color[1], player2Color[2]);
+                case 3:
                     PongDisplay::drawStrokedText(player2NameCText, 0.1f, 100, 150, 0);
                     PongDisplay::drawStrokedText(player2NameText, 0.1f, 250, 150, 0);
-                }
-            }
-            else {
-                // display the menu
-                PongDisplay::drawStrokedText(titleText, 0.3f, 50, 70, 0);
-                PongDisplay::drawStrokedText(leftBumperCText, 0.1f, 120, 120, 0);
-                PongDisplay::drawStrokedText(rightBumperCText, 0.1f, 120, 150, 0);
-                PongDisplay::drawStrokedText(gameModeText, 0.1f, 120, 180, 0);
-                PongDisplay::drawStrokedText(gameModeCText, 0.09f, 120, 200, 0);
-                PongDisplay::drawStrokedText(ballSpeedText, 0.1f, 120, 230, 0);
-                PongDisplay::drawStrokedText(ballSpeedCText, 0.09f, 120, 250, 0);
-                PongDisplay::drawStrokedText(startGameText, 0.15f, 110, 400, 0);
+                case 2:
+                    PongDisplay::drawStrokedText(playerColorCText, 0.1f, 100, 120, 0);
+                    PongDisplay::drawRect(350, 120, 25, 10, player1Color[0], player1Color[1], player1Color[2]);
+                case 1:
+                    PongDisplay::drawStrokedText(player1NameCText, 0.1f, 100, 100, 0);
+                    PongDisplay::drawStrokedText(player1NameText, 0.1f, 250, 100, 0);
+                    break;
+                default:
+                    // display the menu
+                    PongDisplay::drawStrokedText(titleText, 0.3f, 50, 70, 0);
+                    PongDisplay::drawStrokedText(leftBumperCText, 0.1f, 120, 120, 0);
+                    PongDisplay::drawStrokedText(rightBumperCText, 0.1f, 120, 150, 0);
+                    PongDisplay::drawStrokedText(gameModeText, 0.1f, 120, 180, 0);
+                    PongDisplay::drawStrokedText(gameModeCText, 0.09f, 120, 200, 0);
+                    PongDisplay::drawStrokedText(ballSpeedText, 0.1f, 120, 230, 0);
+                    PongDisplay::drawStrokedText(ballSpeedCText, 0.09f, 120, 250, 0);
+                    PongDisplay::drawStrokedText(startGameText, 0.15f, 110, 400, 0);
+                    break;
             }
         }
     
@@ -341,7 +373,7 @@ void moveBall(){
 	else if (ballX < bumperWidth) {
 		if(inbetween(ballY, leftBumperYPos + bumperHeight, leftBumperYPos)) {
 			
-			ballVelocityX= -ballVelocityX;
+			ballVelocityX = -ballVelocityX;
 			
 			if(inbetween(ballY, leftBumperYPos, leftBumperYPos + bumperHeight*0.3))
 				ballVelocityY -= 0.3;
@@ -356,7 +388,7 @@ void moveBall(){
 	// top edge detection
 	else if(ballY < 0) {
 		ballY = 0;
-		ballVelocityY= -ballVelocityY;
+		ballVelocityY = -ballVelocityY;
 	}
 	// bottom edge detection
 	else if(ballY > height - ballHeight){
