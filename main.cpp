@@ -218,6 +218,8 @@ void mykey(GLFWwindow* window, int key, int scancode, int action, int mods){
                     player2Color[0] = 1.0f;
                     player2Color[1] = 1.0f;
                     player2Color[2] = 1.0f;
+                    player1Score = 0;
+                    player2Score = 0; 
                     break;
                 case GLFW_KEY_O:
                     if (rightBumperYPos > 0)
